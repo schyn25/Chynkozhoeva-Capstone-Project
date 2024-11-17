@@ -1,0 +1,242 @@
+---
+title: "Data_Exploration"
+format: html
+editor: visual
+---
+
+# Data Exploration
+
+Data Exploration stage is important because it helps us to understand the structure of the data, identify potential issues, whether they are outliers or human typos, and can help refining our hypotheses.
+
+Below is my process of data exploration, where I try to understand my variables, check for mistakes, and fix them accordingly. The steps are written by using imperative words, which make the narration sound like a 'manual'.
+
+## Get Familiar With Your Data
+
+Start with clearing the environment and enabling essential packages.
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(ggplot2) #ggplot2 is a package useful for data visualization. It makes a wide range of plots.
+library(here)
+```
+
+Import data into R and create a new data frame (DF).
+
+```{r}
+birds_data <- read.csv(here("DATA", "Sezim_birds_complete.csv"))
+```
+
+Use str() and glimpse() to have an overview of what 'birds_data' contains.
+
+```{r}
+str(birds_data) 
+
+#str() shows a conscise display of the data frame. It displays the type of each column and provides a brief preview of the data.  
+```
+
+For instance, we can see that this DF has 10220 observations and 10 variables. If we look at 'Ecosystem' variable, it is a categorical data that falls into character (chr) type, and the first few values in this DF belong to the same habitat, known as "Desert grassland".
+
+```{r}
+glimpse(birds_data) 
+
+#glimpse() is useful for viewing big data sets. It displays columns names, types, and samples of a few first values horizontally, making it easier to read.
+```
+
+Although glimpse() provides us with the same information, the display is arguably more easily readable. Due to my personal preferance, I decided to use glimpse() instead of str() in the future.
+
+## Check Data Types, Find Any Mistakes & Fix The Problems
+
+After familiarizing myself with this data set, I decided to change a few things:
+
+1.  Fix variables types if needed.
+
+Change 'Date' from character to factor variable:
+
+```{r}
+library(lubridate)
+birds_data$Date <- mdy(birds_data$Date) 
+
+#'lubridate' package helps handling different date formats. It does so by converting the original date format, which in our case was 'mdy'. E.g: 1/23/91. 
+```
+
+Change categorical variables into factors:
+
+```{r}
+birds_data$Species <- as.factor(birds_data$Species)
+```
+
+```{r}
+birds_data$Ecosystem <- as.factor(birds_data$Ecosystem)
+```
+
+```{r}
+birds_data$Transect <- as.factor(birds_data$Transect)
+```
+
+Now we can either check the changes under "Data" in R's Environment tab or use glimpse().
+
+```{r}
+glimpse(birds_data)
+```
+
+As we can see on the table, all the data type changes were made accurately. Now we proceed to the next steps.
+
+2.  Check for inconsistencies.
+
+Since converting "Species" into factor variable gave us 92 levels, I wanted to check if there are any inconsistencies.
+
+```{r}
+levels(birds_data$Species)
+
+#levels() shows unique categories, also knows as 'levels', in the "Species" column. It helps to identify any inconsistencies in spelling, etc. 
+```
+
+Some of the level names had blank spaces but, they were uniform, potentially from copy-pasting, so there was no need for renaming or standardizing the entries. Now we know that we actually have 123 distinct bird species present in the study.
+
+The same was done for 'Ecosystem' and 'Transect' groups.
+
+```{r}
+levels(birds_data$Ecosystem)
+levels(birds_data$Transect)
+```
+
+'levels' function displayed that there are only three unique ecosystem entries (Desert grassland, Desert schrubland, and Pinyon woodland) and three transect sites.
+
+
+## Plot The Graphs & Check For Outliers
+
+There are two basic ways to find outliers by plotting graphs. We can use histograms and boxplots.
+
+a\) Histograms
+
+In the context of data exploration stage, we can use histograms to visualize extreme values that do not follow general trend. We would expect outliers to be represented as isolated bars.
+
+Each histogram plotted below follows almost the same code. ggplot() is used to plot a graph, where we need to give an x-value, which is our predictor variable. geom_histogram() plots a histogram
+
+```{r}
+ggplot(birds_data, aes(x=Temp_F)) +
+  geom_histogram(bins=10) +
+  xlab("Temperature (F)") +
+  theme_bw()
+```
+The histogram for temperature is skewed to the left. No outliers observed. 
+
+```{r}
+ggplot(birds_data, aes(x=Cloud_Cover)) +
+  geom_histogram(bins=10) +
+  xlab("Cloud Cover (scale 1-8)") +
+  theme_bw()
+```
+The histogram for cloud cover is skewed to the right. Also, no extreme outliers observed.
+
+```{r}
+ggplot(birds_data, aes(x=Wind_mph)) +
+  geom_histogram(bins=10) +
+  xlab("Wind Speed (mph)") +
+  theme_bw()
+```
+Similar things can be said about histogram for wind speed. It is also skewed to the right and doesn't have strong outliers.
+
+
+b\) Boxplots
+
+Boxplots were used for three integer variables such as: temperature, cloud cover, and wind speed.
+
+```{r}
+ggplot(birds_data, aes(Temp_F)) +
+  geom_boxplot() +
+  xlab("Temperature (F)") 
+```
+No visible dots/points observed on the graph, which means there are no outliers. 
+
+
+```{r}
+ggplot(birds_data, aes(Cloud_Cover)) +
+  geom_boxplot() +
+  xlab("Cloud Cover (scale 1-8)")
+ 
+```
+The boxplot for cloud cover also doesn't show any outliers.
+
+```{r}
+ggplot(birds_data, aes(Wind_mph)) +
+  geom_boxplot() +
+  xlab("Wind Speed (mph)") 
+    
+```
+The boxplot for wind speed shows three distinct outliers. However, I don't think they are too significant, and therefore, I will keep the values for the time being. 
+
+# A part of data exploration is looking at statistical summary. So, below I will look at...
+
+```{r}
+birds1 = birds_data |>
+  select("Species", "Count", "Ecosystem") |>
+  group_by(Species, Ecosystem) |>
+  summarise(sum = sum(Count))
+```
+
+```{r}
+summary(birds1) #summary() calculates some basic statistical values, like minimum and maximum count, mean and median.
+```
+As we can see on the table, there are several NAs, but I wasn't sure if removing them would be helpful, so I did not include 'na.rm = TRUE' in my code chunks above. 
+
+
+Another way to find outliers includes recalling introduction to statistics and understanding upper and lower bounds as well as interquartile range (IQR). 
+
+Reminder:
+In statistics, values above the upper bound and values below the lower bound considered as outliers. 
+1. to calculate IQR, substract First Quartile (Q1) from Third Quartile (Q3)
+2. upper bound = Q3 + 1.5 * IQR
+3. lower bound = Q1 - 1.5 * IQR
+
+```{r}
+upper_bound = 1.5*(14.50-1) + 14
+lower_bound = 1 - 1.5*(14.50-1) 
+```
+
+```{r}
+birds_up_outlier = birds1 |>
+  filter(sum>34.75) #all of the 15 outputs are outliers as there are higher than our upper bound 
+ #there are no lower bound outliers
+```
+
+
+
+```{r}
+ggplot(birds1, aes(x = sum)) +
+  geom_histogram()
+```
+
+```{r}
+birds2 = birds_data |>
+  select(-"Date", -"Start_Time", -"End_Time")
+```
+
+```{r}
+ggplot(birds2, aes(x = Ecosystem, y = sum)) +
+  geom_point()
+```
+
+```{r}
+ggplot(birds2, aes(x = Ecosystem, y = sum)) +
+  geom_histogram()
+```
+
+
+
+
+
+
+
+Once the data is finalized and all necessary steps are taken, we can save changes in a new .csv file:
+
+```{r}
+write_csv(birds_data, here("Data", "bird_data_cap.csv")) 
+
+#this code saves a new .csv file. The code includes data frame, desired location of the new file as well as it's new name. 
+```
+
+Future steps:
+
+I am planning to create two new columns:
