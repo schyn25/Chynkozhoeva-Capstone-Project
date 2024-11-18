@@ -84,7 +84,7 @@ As we can see on the table, all the data type changes were made accurately. Now 
 
 2.  Check for inconsistencies.
 
-Since converting "Species" into factor variable gave us 92 levels, I wanted to check if there are any inconsistencies.
+Since converting "Species" into factor variable gave us 123 levels, I wanted to check if there are any inconsistencies.
 
 ```{r}
 levels(birds_data$Species)
@@ -103,7 +103,6 @@ levels(birds_data$Transect)
 
 'levels' function displayed that there are only three unique ecosystem entries (Desert grassland, Desert schrubland, and Pinyon woodland) and three transect sites.
 
-
 ## Plot The Graphs & Check For Outliers
 
 There are two basic ways to find outliers by plotting graphs. We can use histograms and boxplots.
@@ -120,7 +119,8 @@ ggplot(birds_data, aes(x=Temp_F)) +
   xlab("Temperature (F)") +
   theme_bw()
 ```
-The histogram for temperature is skewed to the left. No outliers observed. 
+
+The histogram for temperature is skewed to the left. No outliers observed.
 
 ```{r}
 ggplot(birds_data, aes(x=Cloud_Cover)) +
@@ -128,6 +128,7 @@ ggplot(birds_data, aes(x=Cloud_Cover)) +
   xlab("Cloud Cover (scale 1-8)") +
   theme_bw()
 ```
+
 The histogram for cloud cover is skewed to the right. Also, no extreme outliers observed.
 
 ```{r}
@@ -136,8 +137,8 @@ ggplot(birds_data, aes(x=Wind_mph)) +
   xlab("Wind Speed (mph)") +
   theme_bw()
 ```
-Similar things can be said about histogram for wind speed. It is also skewed to the right and doesn't have strong outliers.
 
+Similar things can be said about histogram for wind speed. It is also skewed to the right and doesn't have strong outliers.
 
 b\) Boxplots
 
@@ -148,8 +149,8 @@ ggplot(birds_data, aes(Temp_F)) +
   geom_boxplot() +
   xlab("Temperature (F)") 
 ```
-No visible dots/points observed on the graph, which means there are no outliers. 
 
+No visible dots/points observed on the graph, which means there are no outliers.
 
 ```{r}
 ggplot(birds_data, aes(Cloud_Cover)) +
@@ -157,6 +158,7 @@ ggplot(birds_data, aes(Cloud_Cover)) +
   xlab("Cloud Cover (scale 1-8)")
  
 ```
+
 The boxplot for cloud cover also doesn't show any outliers.
 
 ```{r}
@@ -165,9 +167,10 @@ ggplot(birds_data, aes(Wind_mph)) +
   xlab("Wind Speed (mph)") 
     
 ```
-The boxplot for wind speed shows three distinct outliers. However, I don't think they are too significant, and therefore, I will keep the values for the time being. 
 
-# A part of data exploration is looking at statistical summary. So, below I will look at...
+The boxplot for wind speed shows three distinct outliers. However, I don't think they are too significant, and therefore, I will keep the values for the time being.
+
+A part of data exploration is looking at statistical summary. So, below I will look at summary of my birds data with a focus on species and ecosystems.
 
 ```{r}
 birds1 = birds_data |>
@@ -179,55 +182,110 @@ birds1 = birds_data |>
 ```{r}
 summary(birds1) #summary() calculates some basic statistical values, like minimum and maximum count, mean and median.
 ```
-As we can see on the table, there are several NAs, but I wasn't sure if removing them would be helpful, so I did not include 'na.rm = TRUE' in my code chunks above. 
 
+As we can see on the table, there are several NAs, but I wasn't sure if removing them would be helpful, so I did not include 'na.rm = TRUE' in my code chunks above.
 
-Another way to find outliers includes recalling introduction to statistics and understanding upper and lower bounds as well as interquartile range (IQR). 
+Another way to find outliers includes recalling introduction to statistics and understanding upper and lower bounds as well as interquartile range (IQR).
 
-Reminder:
-In statistics, values above the upper bound and values below the lower bound considered as outliers. 
-1. to calculate IQR, substract First Quartile (Q1) from Third Quartile (Q3)
-2. upper bound = Q3 + 1.5 * IQR
-3. lower bound = Q1 - 1.5 * IQR
+Reminder: In statistics, values above the upper bound and values below the lower bound considered as outliers.
+
+1.  to calculate IQR, substract First Quartile (Q1) from Third Quartile (Q3) IQR = 14 - 1 = 13
+
+2.  upper bound = Q3 + 1.5 \* IQR 3. lower bound = Q1 - 1.5 \* IQR
 
 ```{r}
-upper_bound = 1.5*(14.50-1) + 14
-lower_bound = 1 - 1.5*(14.50-1) 
+
+upper_bound = 14 + 1.5*13 
+lower_bound = 1 - 1.5*13
 ```
+
+There won't be any lower bound outliers, but we can calculate outliers for the upper bound:
 
 ```{r}
 birds_up_outlier = birds1 |>
-  filter(sum>34.75) #all of the 15 outputs are outliers as there are higher than our upper bound 
- #there are no lower bound outliers
+  filter(sum>33.5) 
 ```
 
+The table consist of 15 entries, but I feel like there is something wrong, as in I don't think this information or the way I looked at it makes sense biologically because what if the total count of a certain species in the area which is an outlier actually just means that that particular species thrives in that type of environment, so you see them more often, or maybe they just flock in big group, etc. I need to look more into that before I do anything with these outliers.
 
+Here is the histogram for that table. This histogram is skewed to the right, and it seems that the tail is pulled by those outliers.
 
 ```{r}
 ggplot(birds1, aes(x = sum)) +
-  geom_histogram()
+  geom_histogram(bins =10)
+```
+
+## Play around with data and plot different variables
+
+I looked at the count of birds grouped and summarized by transect, point and species present.
+
+```{r}
+summary_data <- birds_data %>%
+  group_by(Transect, Point, Species) %>%
+  summarize(total_count = sum(Count))
 ```
 
 ```{r}
-birds2 = birds_data |>
-  select(-"Date", -"Start_Time", -"End_Time")
+ggplot(summary_data, aes(x = Transect, y = total_count)) +
+  geom_boxplot() +
+  labs(x = "Transect", y = "Total Count") +
+  theme_minimal() 
+  
+```
+
+Although I am not yet familiar with the vegan package, I wanted to look at Species Abundance in simple terms (even if my idea might not be right):
+
+```{r}
+species_abundance <- birds_data %>%
+  group_by(Ecosystem, Species) %>%
+  summarise(total_abundance = sum(Count))
 ```
 
 ```{r}
-ggplot(birds2, aes(x = Ecosystem, y = sum)) +
-  geom_point()
+#boxplot for abundance across ecosystems
+
+ggplot(species_abundance, aes(x = Ecosystem, y = total_abundance)) +
+  geom_boxplot() +
+  labs(x = "Ecosystem", y = "Total Abundance") +
+  theme_bw() +
+  theme_light()
+```
+
+I tried to find Species Richness without applying vegan package:
+
+```{r}
+species_richness <- birds_data %>%
+  group_by(Transect, Point, Ecosystem) %>%
+  summarise(richness = n_distinct(Species))
+```
+
+------------------------------------------------------------------------
+
+I wanted to look at how different environmental factors differ across ecosystems. So, I looked at boxplots for temperature, wind speed, and cloud cover. I aslo tried different themes, to see what I might like more.
+
+```{r}
+#boxplot for temperature
+
+ggplot(birds_data, aes(x = Ecosystem, y = Temp_F)) +
+  geom_boxplot() +
+  labs(x = "Ecosystem", y = "Temperature (°F)") +
+  theme_light()
+
 ```
 
 ```{r}
-ggplot(birds2, aes(x = Ecosystem, y = sum)) +
-  geom_histogram()
+ggplot(birds_data, aes(x = Ecosystem, y = Wind_mph)) +
+  geom_boxplot() +
+  labs(x = "Ecosystem", y = "Wind Speed (mph)") +
+  theme_bw()
 ```
 
-
-
-
-
-
+```{r}
+ggplot(birds_data, aes(x = Ecosystem, y = Cloud_Cover)) +
+  geom_boxplot() +
+  labs(x = "Ecosystem", y = "Cloud Cover") +
+  theme_get()
+```
 
 Once the data is finalized and all necessary steps are taken, we can save changes in a new .csv file:
 
@@ -237,6 +295,12 @@ write_csv(birds_data, here("Data", "bird_data_cap.csv"))
 #this code saves a new .csv file. The code includes data frame, desired location of the new file as well as it's new name. 
 ```
 
-Future steps:
+### Future steps:
 
-I am planning to create two new columns:
+-   I haven't done scatterplots, because they require two continuous variables, and for now I don't really have them available. Once I create new continous variables, I will use scatterplots to look at the relationship.
+
+-   I am planning to find ways on ho wto deal with NAs because they did not make sense when plotting boxplots, and there might be better ways of dealing with them.
+
+-   I am aldo planning to actually look at Species Richness and Species Abundance through 'vegan' package.
+
+-There are more steps to consider and a lot of things to work on.
