@@ -1,0 +1,26 @@
+Sezim Chynkozhoeva
+November 17, 2024
+
+This document contains essential information regarding “Data Set Preparation” assignment, where I managed and organized data for my Capstone Data Project. Each file serves a specific purpose and contributes to the overall structure and clarity of the dataset, with a focus on making it usable in R programming. I included all the files present in the “Chynkozhoeva-Data-Preparation.zip” folder. For easier navigation, I created two sub-folders named "Original_data" and "Fixed data".
+
+This document shares steps and procedures followed during the “Data Exploration” stage of the Capstone Project. 
+
+Currently, in the ‘Code” folder of the “Chynkozhoeva-Capstone-Project” , you can find a “Data Exploration.qmd” that includes everything I’ve done for this stage of my assignment. 
+
+As I was learning more about my data, I realized that my .csv file that I originally selected for this part did not have some variables that I decided to use later for this project. Therefore, after consulting Erika, I decided to upload a new .csv file called “Sezim_birds_complete.csv”, which fully captures all the variables that could be used in the future. The only difference between this .csv file and the original downloaded from online repository is the column names that I changed during preliminary data preparation stage, everything else remained the same.
+
+Here are some steps I took for this assignment:
+
+I markdown some key parts, such as:
+
+- “Get familiar with your data” - which includes setting up the stage, importing the dataset, getting an overview of the data structure
+
+- “Check data types, find any mistakes & fix the problems” - includes fixing variable types (e.g. dates and factors), checking and fixing inconsistencies in the levels.
+
+- “Plot the graphs & check for outliers” - includes plotting histograms and box plots, as well as finding outliers though calculation of upper and lower bound. Outliers that were found were not omitted as I require more justification to support my decision.
+
+- “Play around with data & plot different variables” - includes summarizing and grouping different variables and plotting them against each other. This part may need more work and polishing.
+
+- “Future Steps” - include steps I consider to take or learn more about in the future, such as better use of NAs, what to do with the outliers and learning important packages like ‘vegan’
+
+

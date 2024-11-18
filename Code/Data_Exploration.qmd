@@ -215,7 +215,7 @@ ggplot(birds1, aes(x = sum)) +
   geom_histogram(bins =10)
 ```
 
-## Play around with data and plot different variables
+## Play Around with Data & Plot Different Variables
 
 I looked at the count of birds grouped and summarized by transect, point and species present.
 
