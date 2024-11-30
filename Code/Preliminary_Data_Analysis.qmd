@@ -1,0 +1,288 @@
+---
+title: "Preliminary_Data_Analysis"
+format: html
+editor: visual
+---
+
+# Preliminary Data Analysis
+
+# REDO In this section we will address some statistical analysis that we covered in and out of class: ...
+
+Set things up by running essential packages, including `vegan`:
+
+```{r}
+rm(list = ls()) #clears R's environment
+
+library(tidyverse)
+library(vegan)
+library(here)
+
+```
+
+`vegan` is mainly used to:
+
+-   Calculate species richness and other diversity indices such as Simpson's or Shannon index
+
+-   Perform multidimensional analysis via community ordination
+
+In order to use vegan package we need to alter our long format to wide format data frames. The first section will demonstrate how to do that.
+
+------------------------------------------------------------------------
+
+## Reshaping data frames
+
+Pull in the dataset saved during "Data Exploration":
+
+```{r}
+bird_df <- read.csv(here("Data", "bird_data_cap.csv")) 
+
+glimpse(bird_df)
+```
+
+This dataset is not much different from the original .csv. It includes 23 columns, but for this data analysis we will mainly use only 7, such as Ecosystem, Species, Transect, and a few others.
+
+Create a data frame, where you calculate sum of species based on ecosystem type and group of bird species:
+
+```{r}
+birds1 = bird_df |>
+  select("Species", "Count", "Ecosystem") |>
+  group_by(Species, Ecosystem) |>
+  summarise(sum = sum(Count, na.rm = T))
+
+#select() chooses only desired columns
+#group_by() groups data by both `Species` and `Ecosystem`
+#summarise() and sum() calculates the sum of the `Count` column for each combination
+```
+
+The table that was generated includes NAs under the 'Ecosystem' variable. Keeping those NAs seemed unreasonable to me since I am counting numbers of species within the three specific ecosystems: desert grassland, desert shrubland, and pinyon woodland.
+
+Therefore, I decided to omit that information by using `drop_na()`:
+
+```{r}
+birds1 = bird_df |>
+  select("Species", "Count", "Ecosystem") |>
+  group_by(Species, Ecosystem) |>
+  summarise(sum = sum(Count, na.rm = T)) |>
+  drop_na(Ecosystem)
+
+```
+
+I wanted to make sure there are no more NA levels under Ecosystem, so I used `levels()`:
+
+```{r}
+birds1$Ecosystem <- factor(birds1$Ecosystem)
+levels(birds1$Ecosystem)
+
+#shows the unique categories present in the Ecosystem column
+```
+
+Ok, so there are only three unique levels within the 'Ecosystem" variable.
+
+Another (maybe even better) way would be to use `complete.cases()` function to filter out rows with NA across multiple columns. I will demonstrate it's use in combination with `pivot_wider()` function that is necessary for changing data frames into wide format.
+
+```{r}
+birds_wide <- birds1 |> 
+  filter(complete.cases(Ecosystem, Species)) |>
+  pivot_wider(names_from = Species, values_from = sum)
+
+#filter() filters out rows that do not have complete data for the Ecosystem and Species columns 
+```
+
+Check the absence of NAs:
+
+```{r}
+summary(birds_wide)
+
+#provides overview of the dataset
+```
+
+I am still not certain about the value of NAs in the table. I would expect `complete.cases()` to return values without NAs, so I did not understand why I still have them.
+
+For instance, if we look at Barn Swallow, we can see a 0 at desert grassland, which means that this bird species was not detected in that area. However, the table also displays NA for pinyon woodland.
+
+Initially, I was wondering if I should leave NAs as they are assuming that the data collection was incomplete. However, I decided to change NAs to 0, under assumption that there the species were not observed, but the data collector forgot to put 0 as a value. 
+
+```{r}
+birds_wide <- birds_wide |> 
+  mutate(across(where(is.numeric), ~replace_na(., 0)))
+
+#this code chunk scans across all numeric columns and runs ~ replace_na() function, putting 0 in place of NA
+```
+
+Now the data is in the required `vegan` format. Save the new file:
+
+```{r}
+write.csv(birds_wide, here("Data", "birds_wide.csv"), row.names = F)
+```
+
+------------------------------------------------------------------------
+
+## Calculate species richness and diversity indices with vegan package
+
+To keep things less busy, for this part you may want to clean R's environment first:
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(vegan)
+library(here)
+```
+
+Import "birds_wide.csv":
+
+```{r}
+indices <- read.csv(here("Data/birds_wide.csv"))
+```
+
+### Calculate Species Richness
+
+We use the `vegan` function `specnumber` (short for "species number") to calculate species richness, as so.
+
+```{r}
+species_richness <- specnumber(indices[,2:124])
+
+#use indexing to grab only data from the columns of the dataframe that have information about birds. We use all rows but skip the first column which is ecosystem type.
+
+species_richness
+```
+
+The result is a vector that gives the number of species at each of the 3 ecosystem types. For example, the first number, 42, corresponds to the first row of `indices` where, if we look across the row, we can see that there are 42 distinct species including American Kestrel, Bendire's Thrasher, etc.
+
+- The order of species richness is the following: Desert grassland (42) < Desert shrubland (57) < Pinyon woodland (88). We can see that Pinyon woodland has more than twice as many species as Desert grassland, making it the richest habitat in terms of species count.
+
+### Calculate Diversity Indices
+
+We use the `vegan` function `diversity` to calculate various diversity indices and specify which index we want to use as one of the arguments for the function.
+This returns the inverse of the Simpson's index:
+
+```{r}
+simpsons_index <- diversity(indices[,2:124], index = "invsimpson")
+
+#here first column "Ecosystem" was skipped, therefore we starts with 2 and count until column 124 inclusively
+```
+
+The inverse Simpson's Index focuses on how evenly species are distributed within a community.
+
+- Low values suggests that most individuals belong to only a couple of species - an indicator of low evenness. On the contrary, high values show that species are more evenly distributed and there is no single species significantly dominating the area. 
+
+
+According to the values generated:
+
+- The Pinyon woodland  (17.24) is the most diverse, while the Desert grassland (4.46) is the least diverse.
+
+- Similarly to the calculated species richness, this inverse Simpson's Index shows us that Desert grassland is less evenly distributed than other two ecosystems.
+
+`vegan` also allows us to calculate the Shannon index:
+
+For this calculation, I am expecting to see the values in the following order based on the earlier calculated species richness: Desert grassland < Desert shrubland < Pinyon woodland.   
+
+
+```{r}
+shannon_index <- diversity(indices[,2:124], index = "shannon")
+```
+
+- Shannon Index looks at number of species AND how evenly are individuals distributed among the species. 
+
+- If we look at values generated, the third row - Pinyon woodland - has Shannon Index of 3.28, the highest among other ecosystems. The higher the value of Shannon Index, the higher is the population diversity. 
+
+- The increasing order of Shannon Index value is following: Desert grassland (1.98) -> Desert shrubland (2.58) -> Pinyon woodland (3.28). This observation supports my expected ranking. 
+
+
+### Storing results in a new data frame
+
+If you want to do all of the above but store the results in a data frame as they are generated, rather than as individual vectors, you have two choices.
+
+1.  Create an empty data frame to store the results in before you start calculating different indices
+2.  Put the vectors together into a data frame after you calculate the indices.
+
+I prefer the second option, which you can see below:
+
+```{r}
+Div_results <-
+  as.data.frame(cbind(species_richness, simpsons_index, shannon_index))
+```
+
+Let's make sure you don't forget what these numbers refer to. It is important to add the first (Ecosystem) column that we originally ommited. To do that:
+
+```{r}
+Div_results$Ecosystem <- indices$Ecosystem
+```
+
+When you run this code, it automatically adds the requested column at the end of the data frame. Use `relocate` to move the columns so that ecosystem comes first:
+
+```{r}
+Div_results <- Div_results |> relocate(Ecosystem, .before = species_richness) 
+```
+
+---
+
+## Look at the relationship between species abundance and ecosystem type using one-way ANOVA
+
+We can use `birds1` data frame for our species abundance since it already calculated the sum of each bird species across the three ecosystems.
+
+We will be using the same Plot -> Model -> Check Assumptions -> Interpret -> Plot Again workflow introduced in Chapter 5.
+
+First, look at your data:
+
+```{r}
+glimpse(birds1)
+```
+We've got 3 variables and 209 observations: 124 bird species spread across three ecosystem types.
+
+### Plot our initial data:
+
+```{r}
+ggplot(birds1, aes(x = Ecosystem, y = sum)) +
+  geom_boxplot()
+```
+
+Looking at this graph, I observe that the Pinyon woodland ecosystem shows a greater spread in the data, as indicated by the larger interquartile range. While all three ecosystems exhibit significant outliers, I plan to retain them in this analysis. In my case, where we examine species detectability in specific environments, outliers may reflect the natural variability of certain bird species within an ecosystem. Some species could be significantly more abundant than others, and these outliers could capture that ecological reality.
+
+### Construct a linear regression model
+
+```{r}
+species_abundance_md <- lm(sum ~ Ecosystem, data = birds1)
+```
+
+### Check the assumptions
+
+```{r}
+library(tidyverse)
+library(ggfortify)
+
+autoplot(species_abundance_md, smooth.colour = NA)
+```
+To my surprise, the `Normal Q-Q` plot from the `autoplot` shows that my data does not follow a normal distribution. Although the points initially align with the reference line, there is a noticeable bend away from the line towards the middle. This deviation could indicate that extreme points are heavily skewing the distribution. I’m wondering if this is due to the outliers I decided to retain earlier.
+
+Given that the distribution does not perfectly align with normality, I will need to consider alternative approaches for analysis.
+
+Even though I am not sure how to fix this right now, I am considering proceeding with ANOVA to see where it gets me.
+
+### Interpret the results
+
+To see how the species abundance (total count) varies across different ecosystems, we will use `anova()`:
+
+```{r}
+anova(species_abundance_md)
+```
+I continued performing the ANOVA, but the results were not promising. The p-value of 0.675 indicates that we cannot reject the null hypothesis, suggesting that there is no significant difference between the ecosystem types. Since the p-value is not small enough, we cannot proceed with additional tests or interpretations that would rely on significant differences.
+
+A few potential considerations moving forward:
+
+1. The one-way ANOVA may not be the most suitable test for addressing my research question. It would be worthwhile to explore alternative statistical methods.
+2. I may need to reconsider the inclusion of certain outliers, as they could be skewing the distribution and affecting the results. 
+
+Since there is no significant difference, I do not see the need to replot my graph. 
+
+---
+
+
+## Conduct multiple regression analysis to see what environmental factors predict speciess detectibility
+
+
+---
+
+## Conducting an ordination with the `vegan` package
+
+
+
