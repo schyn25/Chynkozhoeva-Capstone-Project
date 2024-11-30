@@ -51,7 +51,7 @@ After familiarizing myself with this data set, I decided to change a few things:
 
 1.  Fix variables types if needed.
 
-Change 'Date' from character to factor variable:
+Change 'Date' from character to data variable:
 
 ```{r}
 library(lubridate)
@@ -176,14 +176,14 @@ A part of data exploration is looking at statistical summary. So, below I will l
 birds1 = birds_data |>
   select("Species", "Count", "Ecosystem") |>
   group_by(Species, Ecosystem) |>
-  summarise(sum = sum(Count))
+  summarise(sum = sum(Count, na.rm = T))
 ```
+
+In the code chunk above, we used "na.rm = T" because R can't add numbers if it hits an `NA` - it just supplies `NA` as the result.
 
 ```{r}
 summary(birds1) #summary() calculates some basic statistical values, like minimum and maximum count, mean and median.
 ```
-
-As we can see on the table, there are several NAs, but I wasn't sure if removing them would be helpful, so I did not include 'na.rm = TRUE' in my code chunks above.
 
 Another way to find outliers includes recalling introduction to statistics and understanding upper and lower bounds as well as interquartile range (IQR).
 
@@ -222,7 +222,7 @@ I looked at the count of birds grouped and summarized by transect, point and spe
 ```{r}
 summary_data <- birds_data %>%
   group_by(Transect, Point, Species) %>%
-  summarize(total_count = sum(Count))
+  summarize(total_count = sum(Count, na.rm = T))
 ```
 
 ```{r}
@@ -239,6 +239,14 @@ Although I am not yet familiar with the vegan package, I wanted to look at Speci
 species_abundance <- birds_data %>%
   group_by(Ecosystem, Species) %>%
   summarise(total_abundance = sum(Count))
+```
+
+After looking at the table generated, I realized that it is necessary to add "na.rm = T". Looking at the context of the study, if there were no birds detected, R should have returned 0 instead of NA. Therefore, we run the adjusted code:
+
+```{r}
+species_abundance <- birds_data %>%
+  group_by(Ecosystem, Species) %>%
+  summarise(total_abundance = sum(Count, na.rm = T))
 ```
 
 ```{r}
@@ -297,10 +305,10 @@ write_csv(birds_data, here("Data", "bird_data_cap.csv"))
 
 ### Future steps:
 
--   I haven't done scatterplots, because they require two continuous variables, and for now I don't really have them available. Once I create new continous variables, I will use scatterplots to look at the relationship.
+-   I haven't done scatterplots, because they require two continuous variables, and for now I don't really have them available. Once I create new continuous variables, I will use scatterplots to look at the relationship.
 
--   I am planning to find ways on ho wto deal with NAs because they did not make sense when plotting boxplots, and there might be better ways of dealing with them.
+-   I am planning to find ways on how to deal with NAs because they did not make sense when plotting boxplots, and there might be better ways of dealing with them.
 
--   I am aldo planning to actually look at Species Richness and Species Abundance through 'vegan' package.
+-   I am also planning to actually look at Species Richness and Species Abundance through 'vegan' package.
 
 -There are more steps to consider and a lot of things to work on.
