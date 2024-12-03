@@ -1,0 +1,64 @@
+---
+title: "prelim analysis feedback"
+format: html
+editor: visual
+---
+
+## Preliminary Analysis Feedback
+
+### General
+
+-   Please move the file `prelim_play_around.qmd` into the Code folder. You are going to be creating a "drafts" folder inside of the Code folder where files like that, which I call "scratch files" (playing around, experimenting, but not doing the analysis) will go.
+
+- Overall this is a nice job. You have tackled some tricky stuff which took time, so even though you haven't got all the code for all of your analyses, it is looking good so far!
+
+### Preliminary Data Analysis
+
+-   Please remember that you should have a separate .qmd file for each analysis you perform.
+
+-   Line 70 - It is good that you are making a summary data frame, but I don't understand why is has the same species listed more than once per ecosystem. I think you may want to also group by Transect and possibly Point and see where that gets you.
+
+-   Line 103 - you made the correct choice. The reason that there are NAs is because that species was not observed at a site, so no one put a "zero" because when you are doing point counts like this, you only record the species that are present at each point and not absences.
+
+-   Line 112 - while it is true that you have your data ready for vegan format, with just three rows, you aren't going to have a very interesting ordination. See my comment above about grouping by Transect or Point - it will give you more rows and make a more interesting ordination.
+
+What is the question? I think it is something like "How similar are the transects in terms of bird diversity?"
+
+------------------------------------------------------------------------
+
+-   Line 215 - Good question - and by "abundance" do you mean \# of birds regardless of species, or species richness? This would be a good break point to start a new .qmd file with this analysis. Maybe write "birds1" to csv when you create it up above and then you could just read it in here if this is a fresh .qmd file.
+
+-   Line 217 - Your code at line 125 cleared the environment so make it clear that you have to reload birds1 or else write the code here. I had to go re-run the intial code to recreate birds1 in order to continue.
+
+-   Line 236 - when I look at your box plot, I can immediately tell that your data are not normally distributed. I think a histogram with facet_wrap would be a good way to look at this:
+
+```{r}
+ggplot(birds1, aes(sum))+
+  geom_histogram()+
+  facet_wrap(~ Ecosystem, ncol = 1)+
+  theme_bw()
+```
+
+Helps you to see that you have non-normal data and that there is what we call "zero inflation" - you have a lot of sites where there were zero birds. That is ok, but it means we need to use a `glm` model and account for zero inflation. There is a LOT of information about how to do this in Chapter 7 of the book. I will address some but not all of it during class, so you might want to dig in on chapter 7. This is the answer to your point at line 255 and you are right at line 257 - it is fine to look at this as an anova for the moment and doing so is still very similar to what you will do with `glm`.
+
+-   Line 272 - I think you were correct to retain these numbers in your analysis. If you didn't have so many zeroes, they may not actually seem like outliers.
+
+-   Line 274 - I still think, for the sake of practice, it would be good to show a nice plot - think about figure 5.11 in the text - it is a nice example of how you might plot these anova data.
+
+-   Line 274 - I'd also like to see biological interpretation. Does it make sense that there is no difference in abundance among the three habitat types?
+
+------------------------------------------------------------------------
+
+-Line 278 - Again this is where you should begin another .qmd file due to starting a new analysis. Same for ordination.
+
+-   Line 278 continued. what will your response variable be? If you are using presence/absence then I think you need multiple logistic regression, but I think it might be more interesting to go for species richness or a diversity index as the response. You would need a data frame more or less like this:
+
+| Transect | Ecosystem | Species Richness or Diversity | More columns with the environmental variables |
+|----------|-------------|-------------------------|-------------------------|
+|  |  |  |  |
+|  |  |  |  |
+|  |  |  |  |
+
+I have provided a lot of information about multiple regression in the CapDAP Examples git hub repo and we will also discuss how to do it during class.
+
+- Line 282 - As noted above, for your ordination, i think it will be more interesting if you get diversity indices per transect or point so that you have more rows in your wide-format data frame.

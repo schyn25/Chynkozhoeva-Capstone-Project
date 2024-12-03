@@ -1,0 +1,31 @@
+---
+title: "data-exploration-feedback"
+format: html
+editor: visual
+---
+
+## Data Exploration Feedback
+
+1.  Your metadata file should just be about the actual .csv files and other things that might be in your data folder. Your "Metadata for Data Exploration.txt" is really what we call a "README" file because it has information about the entire project. README files generally belong in the root directory for your project. Please do two things:
+
+-   Adjust the metadata file so that the name corresponds to your main data file (e.g. "nameofdatafile_metadata.txt) and so that it has information about the data file including any adjustments you made to the data (you should have this from your data preparation step) and have that in your data folder
+-   If you wish to have global information about the project (which is not a bad idea!), move the text about the whole project to a new file called README.md and put it in the root directory of the project (actually, you. have an empty file called README.md already in your root directory so you can just edit it)
+
+2.  I like that you used imperative words and the "manual" tone to the .qmd!
+3.  Line 54 - you are actually changing Date to a "data" and not a factor variable
+4.  You need to rethink your decision to skip `na.rm = T` in your creation of `birds1`. Here is what you would get if you used it - compare the results of "test" with the results of "birds1". Remember, R can't add numbers if it hits an `NA` - it just supplies `NA` as the result.
+
+```{r}
+test<- birds_data |>
+  select("Species", "Count", "Ecosystem") |>
+  group_by(Species, Ecosystem) |>
+  summarise(sum = sum(Count, na.rm = T))
+```
+
+5.  I really appreciate that you calculated upper and lower bound outliers, but remember that the boxplot does it for you and plots the outliers if it finds any so this step is not required. Part of the reason you got weird answers is because there are problems in `birds1`.
+6.  Again, at line 223, you need na.rm = T. A hint is that if there really were no birds, R should return 0 instead of NA. And it happens again with species_abundance at line 239. Make sure you correct all of these and re-run through your code so you can become familar with the correct assessment of your data.
+7.  Line 257, NICE JOB coming up with your own way to calculate species richness
+
+
+Overall, this was a really thorough data exploration. Once you deal with your NA problem, you'll be in very good shape!
+
