@@ -100,7 +100,7 @@ I am still not certain about the value of NAs in the table. I would expect `comp
 
 For instance, if we look at Barn Swallow, we can see a 0 at desert grassland, which means that this bird species was not detected in that area. However, the table also displays NA for pinyon woodland.
 
-Initially, I was wondering if I should leave NAs as they are assuming that the data collection was incomplete. However, I decided to change NAs to 0, under assumption that there the species were not observed, but the data collector forgot to put 0 as a value. 
+Initially, I was wondering if I should leave NAs as they are assuming that the data collection was incomplete. However, I decided to change NAs to 0, under assumption that there the species were not observed, but the data collector forgot to put 0 as a value.
 
 ```{r}
 birds_wide <- birds_wide |> 
@@ -148,12 +148,11 @@ species_richness
 
 The result is a vector that gives the number of species at each of the 3 ecosystem types. For example, the first number, 42, corresponds to the first row of `indices` where, if we look across the row, we can see that there are 42 distinct species including American Kestrel, Bendire's Thrasher, etc.
 
-- The order of species richness is the following: Desert grassland (42) < Desert shrubland (57) < Pinyon woodland (88). We can see that Pinyon woodland has more than twice as many species as Desert grassland, making it the richest habitat in terms of species count.
+-   The order of species richness is the following: Desert grassland (42) \< Desert shrubland (57) \< Pinyon woodland (88). We can see that Pinyon woodland has more than twice as many species as Desert grassland, making it the richest habitat in terms of species count.
 
 ### Calculate Diversity Indices
 
-We use the `vegan` function `diversity` to calculate various diversity indices and specify which index we want to use as one of the arguments for the function.
-This returns the inverse of the Simpson's index:
+We use the `vegan` function `diversity` to calculate various diversity indices and specify which index we want to use as one of the arguments for the function. This returns the inverse of the Simpson's index:
 
 ```{r}
 simpsons_index <- diversity(indices[,2:124], index = "invsimpson")
@@ -163,30 +162,27 @@ simpsons_index <- diversity(indices[,2:124], index = "invsimpson")
 
 The inverse Simpson's Index focuses on how evenly species are distributed within a community.
 
-- Low values suggests that most individuals belong to only a couple of species - an indicator of low evenness. On the contrary, high values show that species are more evenly distributed and there is no single species significantly dominating the area. 
-
+-   Low values suggests that most individuals belong to only a couple of species - an indicator of low evenness. On the contrary, high values show that species are more evenly distributed and there is no single species significantly dominating the area.
 
 According to the values generated:
 
-- The Pinyon woodland  (17.24) is the most diverse, while the Desert grassland (4.46) is the least diverse.
+-   The Pinyon woodland (17.24) is the most diverse, while the Desert grassland (4.46) is the least diverse.
 
-- Similarly to the calculated species richness, this inverse Simpson's Index shows us that Desert grassland is less evenly distributed than other two ecosystems.
+-   Similarly to the calculated species richness, this inverse Simpson's Index shows us that Desert grassland is less evenly distributed than other two ecosystems.
 
 `vegan` also allows us to calculate the Shannon index:
 
-For this calculation, I am expecting to see the values in the following order based on the earlier calculated species richness: Desert grassland < Desert shrubland < Pinyon woodland.   
-
+For this calculation, I am expecting to see the values in the following order based on the earlier calculated species richness: Desert grassland \< Desert shrubland \< Pinyon woodland.
 
 ```{r}
 shannon_index <- diversity(indices[,2:124], index = "shannon")
 ```
 
-- Shannon Index looks at number of species AND how evenly are individuals distributed among the species. 
+-   Shannon Index looks at number of species AND how evenly are individuals distributed among the species.
 
-- If we look at values generated, the third row - Pinyon woodland - has Shannon Index of 3.28, the highest among other ecosystems. The higher the value of Shannon Index, the higher is the population diversity. 
+-   If we look at values generated, the third row - Pinyon woodland - has Shannon Index of 3.28, the highest among other ecosystems. The higher the value of Shannon Index, the higher is the population diversity.
 
-- The increasing order of Shannon Index value is following: Desert grassland (1.98) -> Desert shrubland (2.58) -> Pinyon woodland (3.28). This observation supports my expected ranking. 
-
+-   The increasing order of Shannon Index value is following: Desert grassland (1.98) -\> Desert shrubland (2.58) -\> Pinyon woodland (3.28). This observation supports my expected ranking.
 
 ### Storing results in a new data frame
 
@@ -214,19 +210,20 @@ When you run this code, it automatically adds the requested column at the end of
 Div_results <- Div_results |> relocate(Ecosystem, .before = species_richness) 
 ```
 
----
+------------------------------------------------------------------------
 
 ## Look at the relationship between species abundance and ecosystem type using one-way ANOVA
 
 We can use `birds1` data frame for our species abundance since it already calculated the sum of each bird species across the three ecosystems.
 
-We will be using the same Plot -> Model -> Check Assumptions -> Interpret -> Plot Again workflow introduced in Chapter 5.
+We will be using the same Plot -\> Model -\> Check Assumptions -\> Interpret -\> Plot Again workflow introduced in Chapter 5.
 
 First, look at your data:
 
 ```{r}
 glimpse(birds1)
 ```
+
 We've got 3 variables and 209 observations: 124 bird species spread across three ecosystem types.
 
 ### Plot our initial data:
@@ -252,6 +249,7 @@ library(ggfortify)
 
 autoplot(species_abundance_md, smooth.colour = NA)
 ```
+
 To my surprise, the `Normal Q-Q` plot from the `autoplot` shows that my data does not follow a normal distribution. Although the points initially align with the reference line, there is a noticeable bend away from the line towards the middle. This deviation could indicate that extreme points are heavily skewing the distribution. I’m wondering if this is due to the outliers I decided to retain earlier.
 
 Given that the distribution does not perfectly align with normality, I will need to consider alternative approaches for analysis.
@@ -265,24 +263,20 @@ To see how the species abundance (total count) varies across different ecosystem
 ```{r}
 anova(species_abundance_md)
 ```
+
 I continued performing the ANOVA, but the results were not promising. The p-value of 0.675 indicates that we cannot reject the null hypothesis, suggesting that there is no significant difference between the ecosystem types. Since the p-value is not small enough, we cannot proceed with additional tests or interpretations that would rely on significant differences.
 
 A few potential considerations moving forward:
 
-1. The one-way ANOVA may not be the most suitable test for addressing my research question. It would be worthwhile to explore alternative statistical methods.
-2. I may need to reconsider the inclusion of certain outliers, as they could be skewing the distribution and affecting the results. 
+1.  The one-way ANOVA may not be the most suitable test for addressing my research question. It would be worthwhile to explore alternative statistical methods.
+2.  I may need to reconsider the inclusion of certain outliers, as they could be skewing the distribution and affecting the results.
 
-Since there is no significant difference, I do not see the need to replot my graph. 
+Since there is no significant difference, I do not see the need to replot my graph.
 
----
-
+------------------------------------------------------------------------
 
 ## Conduct multiple regression analysis to see what environmental factors predict speciess detectibility
 
-
----
+------------------------------------------------------------------------
 
 ## Conducting an ordination with the `vegan` package
-
-
-
